@@ -1,0 +1,2 @@
+This project performs Bayesian pooled and hierarchical analysis using mortality data.
+It uses Gibbs sampling to estimate group-specific and global effects, and includes predictive modeling.
