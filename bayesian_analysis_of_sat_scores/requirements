@@ -1,0 +1,6 @@
+This project performs a full statistical analysis of student academic performance using a dataset containing math, reading, and writing scores along with demographic and preparation-related attributes. The analysis examines how different factors—such as gender and participation in a test preparation course—are associated with variations in test scores.
+
+The project includes:
+- Distribution visualizations for different student groups
+- Bayesian posterior simulations for estimating population parameters
+- Comparative analyses showing credible intervals and differences between groups

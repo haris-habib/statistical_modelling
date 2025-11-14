@@ -1,0 +1,227 @@
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.api as sm
+import scipy.stats as stats
+
+
+class StatisticalAnalysis:
+    """
+    A class containing all dataset preprocessing, Bayesian modeling,
+    simulation, comparison, and visualization tasks.
+    """
+
+    # --------------------------------------------------------------
+    # Initialization
+    # --------------------------------------------------------------
+    def __init__(self, csv_path: str):
+        """Load the dataset into memory."""
+        self.student_scores = pd.read_csv(csv_path)
+
+    # --------------------------------------------------------------
+    # Utility / Helper Methods
+    # --------------------------------------------------------------
+    def break_dataset_by_attributes(self, dataset, score_column, attribute):
+        """
+        Break a dataset into multiple subsets based on unique values
+        of a given categorical attribute.
+        """
+        values = dataset[attribute].unique()
+        subsets = []
+        for value in values:
+            subsets.append(dataset[dataset[attribute] == value])
+        return subsets
+
+    def filter_according_to_values(self, dataset_list, attribute):
+        """
+        Return subsets separated by unique values inside the provided list.
+        """
+        values = dataset_list[0][attribute].unique()
+        result = []
+        for v in values:
+            for dataset in dataset_list:
+                if (dataset[attribute] == v).any():
+                    result.append(dataset)
+                    break
+        return result
+
+    def model_data(self, data):
+        """
+        Perform simple Bayesian posterior simulation:
+        - calculate summary statistics
+        - create posterior samples from normal distribution
+        - calculate credible interval
+        """
+        n = len(data)
+        mean_value = np.mean(data)
+        sd_value = np.std(data)
+        posterior_interval = np.percentile(
+            np.random.normal(mean_value, sd_value / np.sqrt(n), size=5000),
+            [2.5, 50, 97.5],
+        )
+        simulation = np.random.normal(mean_value, sd_value / np.sqrt(n), size=5000)
+        return posterior_interval, simulation
+
+    # --------------------------------------------------------------
+    # Visualization Methods
+    # --------------------------------------------------------------
+    def plot_histogram(self, data, label, title):
+        """Generic histogram plot helper."""
+        plt.figure(figsize=(4, 3))
+        sns.histplot(data, bins=20, kde=False, label=label)
+        plt.title(title, fontsize=14)
+        plt.xlabel("Score", fontsize=12)
+        plt.ylabel("Frequency", fontsize=12)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    # --------------------------------------------------------------
+    # Full Workflow for Score Comparison
+    # (math, reading, writing, and prep course)
+    # --------------------------------------------------------------
+
+    def analyze_score_by_gender(self, score_column):
+        """
+        Handles:
+        - breaking dataset by gender
+        - plotting histograms
+        - running the Bayesian model
+        - histogram of posterior simulation
+        - computing difference distribution
+        - histogram of differences
+        """
+        df_gender = self.break_dataset_by_attributes(
+            self.student_scores, score_column, "gender"
+        )
+        df_female, df_male = self.filter_according_to_values(df_gender, "gender")
+
+        # Histogram for male + female
+        self.plot_histogram(
+            df_male[score_column],
+            "Male",
+            f"Distribution of {score_column} (Male vs Female)",
+        )
+        self.plot_histogram(
+            df_female[score_column],
+            "Female",
+            f"Distribution of {score_column} (Male vs Female)",
+        )
+
+        # Model posterior
+        male_interval, male_simulation = self.model_data(df_male[score_column])
+        female_interval, female_simulation = self.model_data(
+            df_female[score_column]
+        )
+
+        # Posterior simulation plot
+        self.plot_histogram(
+            male_simulation,
+            "Male posterior",
+            f"Posterior Simulation ({score_column})",
+        )
+        self.plot_histogram(
+            female_simulation,
+            "Female posterior",
+            f"Posterior Simulation ({score_column})",
+        )
+
+        # Compare population parameters
+        difference = male_simulation - female_simulation
+        mean_difference = np.mean(difference)
+        percentiles = np.percentile(difference, [2.5, 50, 97.5])
+
+        # Print summary
+        print(f"\nDifference in posterior distributions ({score_column}):")
+        print(f"Mean difference: {mean_difference}")
+        print(f"2.5th Percentile: {percentiles[0]}")
+        print(f"Median: {percentiles[1]}")
+        print(f"97.5th Percentile: {percentiles[2]}")
+
+        # Histogram of differences
+        self.plot_histogram(
+            difference,
+            "Difference",
+            f"Posterior Difference Distribution ({score_column})",
+        )
+
+    # --------------------------------------------------------------
+
+    def analyze_score_by_prep_course(self, score_column):
+        """
+        Identical structure to gender analysis, but for test preparation course.
+        """
+        df_prep = self.break_dataset_by_attributes(
+            self.student_scores, score_column, "test preparation course"
+        )
+        df_prep_yes, df_prep_no = self.filter_according_to_values(
+            df_prep, "test preparation course"
+        )
+
+        # Histogram
+        self.plot_histogram(
+            df_prep_yes[score_column],
+            "Completed",
+            f"Distribution of {score_column} (Prep vs No Prep)",
+        )
+        self.plot_histogram(
+            df_prep_no[score_column],
+            "Not Completed",
+            f"Distribution of {score_column} (Prep vs No Prep)",
+        )
+
+        # Posterior modeling
+        prep_interval, prep_simulation = self.model_data(
+            df_prep_yes[score_column]
+        )
+        noprep_interval, noprep_simulation = self.model_data(
+            df_prep_no[score_column]
+        )
+
+        # Posterior simulation plots
+        self.plot_histogram(
+            prep_simulation,
+            "Completed Prep",
+            f"Posterior Simulation ({score_column})",
+        )
+        self.plot_histogram(
+            noprep_simulation,
+            "No Prep",
+            f"Posterior Simulation ({score_column})",
+        )
+
+        # Differences
+        difference = prep_simulation - noprep_simulation
+        mean_difference = np.mean(difference)
+        percentiles = np.percentile(difference, [2.5, 50, 97.5])
+
+        print(f"\nDifference in posterior distributions ({score_column}):")
+        print(f"Mean difference: {mean_difference}")
+        print(f"2.5th Percentile: {percentiles[0]}")
+        print(f"Median: {percentiles[1]}")
+        print(f"97.5th Percentile: {percentiles[2]}")
+
+        # Histogram of differences
+        self.plot_histogram(
+            difference,
+            "Difference",
+            f"Posterior Difference Distribution ({score_column})",
+        )
+
+
+# --------------------------------------------------------------
+# Script Entry Point
+# --------------------------------------------------------------
+if __name__ == "__main__":
+    analysis = StatisticalAnalysis("student_scores.csv")
+
+    # Gender comparisons
+    analysis.analyze_score_by_gender("math score")
+    analysis.analyze_score_by_gender("reading score")
+    analysis.analyze_score_by_gender("writing score")
+
+    # Preparation course comparison
+    analysis.analyze_score_by_prep_course("math score")
