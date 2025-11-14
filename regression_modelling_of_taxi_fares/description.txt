@@ -1,0 +1,21 @@
+This program loads NYC Taxi trip data, prepares it for modeling, and trains a
+linear regression model to estimate taxi fare amounts.
+
+The workflow includes:
+- reading the trip dataset
+- converting timestamps
+- computing trip duration
+- handling outliers for duration and fare using the IQR method
+- calculating mean distance and duration by pickup/dropoff pair
+- extracting time-related features such as day, month, and rush hour
+- preparing the dataset by removing unused fields
+- splitting into training and testing sets
+- scaling numerical features
+- training a linear regression model
+- evaluating the model on both training and test sets
+- generating diagnostic plots
+- predicting fares for the full dataset
+- applying a fixed fare for trips where RatecodeID equals 2
+
+All tasks are completed using common data analysis tools, following a
+structured data preparation and modeling workflow.
